@@ -1,11 +1,7 @@
+__pycache__/
 .agentguard/
-__pycache__/
-*.egg-info/
-.env
-.venv/
-__pycache__/
-*.egg-info/
 .DS_Store
-.agentguard/
 .env
 .gemini/settings.json
+.venv/
+*.egg-info/
