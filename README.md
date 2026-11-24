@@ -1,4 +1,4 @@
-# AgentGuard
+# WhisperWire
 
 Policy-enforcement proxy between a coding agent and its tools. Before each call it checks
 task fit, permission, outbound secrets, and untrusted-content taint, then **allows, blocks, or asks**
@@ -6,19 +6,21 @@ and logs every decision. Pure standard library, Python 3.11+.
 
 ## Layout
 ```
-agentguard/
-  models.py       ToolCall, Verdict, Decision, SessionContext (shared taint state)
-  shellparse.py   static shell analysis (pipes, subshells, bash -c, curl|sh, /dev/tcp, ...)
-  secrets.py      secret regexes, sensitive paths, redaction, injection heuristics
-  policy.py       PolicyEngine: the four checks + TOML config
-  approvals.py    ask-the-user prompt (via /dev/tty)
-  audit.py        JSONL audit log
-  runtime.py      wires it together: decide() = evaluate -> ask -> log
-  taskjudge.py    task-fit judges: offline heuristic (default) + make_llm_judge(complete) hook
-  viewer.py       static HTML log viewer
-  mcp_proxy.py    MCP stdio proxy
-  shell_guard.py  shell interceptor
-  cli.py          agentguard mcp-proxy | check | logs | viewer | init | reset
+whisperWire/
+  mcp_proxy.py | MCP Proxy. Initiates Streamable HTTP connection w/ MCP endpoint
+  sketch/ Generated sketch from project first draft
+    models.py       ToolCall, Verdict, Decision, SessionContext (shared taint state)
+    shellparse.py   static shell analysis (pipes, subshells, bash -c, curl|sh, /dev/tcp, ...)
+    secrets.py      secret regexes, sensitive paths, redaction, injection heuristics
+    policy.py       PolicyEngine: the four checks + TOML config
+    approvals.py    ask-the-user prompt (via /dev/tty)
+    audit.py        JSONL audit log
+    runtime.py      wires it together: decide() = evaluate -> ask -> log
+    taskjudge.py    task-fit judges: offline heuristic (default) + make_llm_judge(complete) hook
+    viewer.py       static HTML log viewer
+    mcp_proxy.py    MCP stdio proxy
+    shell_guard.py  shell interceptor
+    cli.py          agentguard mcp-proxy | check | logs | viewer | init | reset
 attacks/runner.py       attack suite, ON/OFF block + FP rates, per-category breakdown   (Ethan)
 fuzz/shell_fuzzer.py    evasion fuzzer, 20 mutators                                      (Michael)
 viewer/                 make_demo.py -> demo.html (rendered from the attack suite)
