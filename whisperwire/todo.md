@@ -1,4 +1,5 @@
-- [ ] Change references to "AgentGuard" into "WhisperWire"
+- [~] Change references to "AgentGuard" into "WhisperWire"
+- [ ] Update README to reflect new build process w/ `uv` for actual proxy
 - [ ] Minimal MCP Passthrough Proxy (:8080 -> :9000, impl normal fwd later)
   - [ ] Observe Mode
     - [ ] `--log-dir
