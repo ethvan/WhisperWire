@@ -3,6 +3,7 @@
 Filters (verdict / check / source / free text), a decision timeline, per-tool block rates,
 and click-to-expand rows. Log text is attacker-influenced, so the page only ever uses textContent.
 """
+
 from __future__ import annotations
 
 import json
@@ -21,7 +22,11 @@ def load_rows(path: Path) -> list[dict]:
 
 
 def render(rows: list[dict], title: str = "AgentGuard log") -> str:
-    data = json.dumps(rows, ensure_ascii=False).replace("</", "<\\/").replace("<!--", "<\\!--")
+    data = (
+        json.dumps(rows, ensure_ascii=False)
+        .replace("</", "<\\/")
+        .replace("<!--", "<\\!--")
+    )
     return TEMPLATE.replace("__DATA__", data).replace("__TITLE__", title)
 
 

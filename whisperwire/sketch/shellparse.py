@@ -3,6 +3,7 @@
 Known gaps (fuzz targets): variable indirection (a=cu; b=rl; $a$b), here-docs,
 aliases/functions, encoded payloads. The fuzzer in fuzz/ measures these.
 """
+
 from __future__ import annotations
 
 import os
@@ -15,14 +16,39 @@ from .secrets import SENSITIVE_PATH
 
 SHELLS = {"sh", "bash", "zsh", "dash", "ksh", "fish"}
 FETCHERS = {"curl", "wget"}
-NETWORK_CMDS = {"curl", "wget", "nc", "ncat", "netcat", "socat", "scp", "sftp",
-                "rsync", "ssh", "ftp", "telnet"}
+NETWORK_CMDS = {
+    "curl",
+    "wget",
+    "nc",
+    "ncat",
+    "netcat",
+    "socat",
+    "scp",
+    "sftp",
+    "rsync",
+    "ssh",
+    "ftp",
+    "telnet",
+}
 INTERPRETERS = {"python", "python3", "node", "ruby", "perl", "php"}
 PRIVILEGE = {"sudo", "su", "doas"}
 WRAPPERS = {"env", "command", "nohup", "time", "exec", "nice", "xargs"}
-INSTALLERS = {"pip", "pip3", "npm", "yarn", "pnpm", "cargo", "gem", "go", "uv", "poetry"}
+INSTALLERS = {
+    "pip",
+    "pip3",
+    "npm",
+    "yarn",
+    "pnpm",
+    "cargo",
+    "gem",
+    "go",
+    "uv",
+    "poetry",
+}
 INSTALL_VERBS = {"install", "add", "i", "get"}
-INLINE_NET = re.compile(r"urllib|requests\.|socket|http\.client|fetch\(|XMLHttpRequest|net\.connect|https?://")
+INLINE_NET = re.compile(
+    r"urllib|requests\.|socket|http\.client|fetch\(|XMLHttpRequest|net\.connect|https?://"
+)
 URL_HOST = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.-]*://(?:[^/@\s]+@)?([^/:\s]+)")
 
 
@@ -34,7 +60,9 @@ class ShellAnalysis:
     commands: list[str] = field(default_factory=list)
     has_network: bool = False
     has_sensitive_read: bool = False
-    installs: bool = False             # installs a named package (supply-chain risk after untrusted content)
+    installs: bool = (
+        False  # installs a named package (supply-chain risk after untrusted content)
+    )
 
     def add(self, verdict: Verdict, reason: str) -> None:
         self.findings.append((verdict, reason))
@@ -50,7 +78,12 @@ class ShellAnalysis:
 
     @property
     def risky(self) -> bool:
-        return bool(self.findings) or self.has_network or self.has_sensitive_read or self.installs
+        return (
+            bool(self.findings)
+            or self.has_network
+            or self.has_sensitive_read
+            or self.installs
+        )
 
 
 def _substitutions(cmd: str) -> list[str]:
@@ -63,7 +96,7 @@ def _substitutions(cmd: str) -> list[str]:
         while i < len(cmd) and depth:
             depth += {"(": 1, ")": -1}.get(cmd[i], 0)
             i += 1
-        out.append(cmd[m.end():i - 1] if depth == 0 else cmd[m.end():])
+        out.append(cmd[m.end() : i - 1] if depth == 0 else cmd[m.end() :])
     return out
 
 
@@ -100,10 +133,10 @@ def split_segments(cmd: str) -> list[tuple[str, str]]:
             buf.append(cmd[i + 1])
             i += 1
         elif cmd.startswith(("&&", "||"), i):
-            flush(cmd[i:i + 2])
+            flush(cmd[i : i + 2])
             i += 1
-        elif c == "&" and ((i > 0 and cmd[i - 1] in "<>") or cmd[i + 1:i + 2] == ">"):
-            buf.append(c)                      # 2>&1, &>file
+        elif c == "&" and ((i > 0 and cmd[i - 1] in "<>") or cmd[i + 1 : i + 2] == ">"):
+            buf.append(c)  # 2>&1, &>file
         elif c in ";|&\n":
             flush(c)
         else:
@@ -154,7 +187,11 @@ def analyze(cmdline: str, depth: int = 0) -> ShellAnalysis:
         a.merge(analyze(inner, depth + 1))
 
     # function definitions and brace groups just wrap commands: `f() { cmd; }; f`, `function f { cmd; }`
-    cmdline = re.sub(r"(?:\bfunction\s+)?\b[\w.-]+\s*\(\)\s*\{|\bfunction\s+[\w.-]+\s*\{", " ", cmdline)
+    cmdline = re.sub(
+        r"(?:\bfunction\s+)?\b[\w.-]+\s*\(\)\s*\{|\bfunction\s+[\w.-]+\s*\{",
+        " ",
+        cmdline,
+    )
     prev_cmd = ""
     for op, seg in split_segments(cmdline):
         try:
@@ -176,7 +213,7 @@ def analyze(cmdline: str, depth: int = 0) -> ShellAnalysis:
 def _collect_tokens(a: ShellAnalysis, cmd: str, args: list[str]) -> None:
     is_net = cmd in NETWORK_CMDS
     for tok in args:
-        tok = re.sub(r"^\d*[<>]+", "", tok)            # redirection prefix
+        tok = re.sub(r"^\d*[<>]+", "", tok)  # redirection prefix
         if tok.startswith("-") and "=" in tok:
             tok = tok.split("=", 1)[1]
         if is_net:
@@ -189,8 +226,15 @@ def _collect_tokens(a: ShellAnalysis, cmd: str, args: list[str]) -> None:
             a.paths.append(tok)
 
 
-def _classify(a: ShellAnalysis, cmd: str, args: list[str], argv: list[str],
-              op: str, prev_cmd: str, depth: int) -> None:
+def _classify(
+    a: ShellAnalysis,
+    cmd: str,
+    args: list[str],
+    argv: list[str],
+    op: str,
+    prev_cmd: str,
+    depth: int,
+) -> None:
     if cmd in NETWORK_CMDS or (cmd == "git" and args[:1] == ["push"]):
         a.has_network = True
 
@@ -200,10 +244,15 @@ def _classify(a: ShellAnalysis, cmd: str, args: list[str], argv: list[str],
             cmd, args = "pip", args[2:]
             sub = next((t for t in args if not t.startswith("-")), "")
     if cmd in INSTALLERS and sub in INSTALL_VERBS:
-        pkgs = [t for t in args[args.index(sub) + 1:] if not t.startswith("-")]
+        pkgs = [t for t in args[args.index(sub) + 1 :] if not t.startswith("-")]
         flags = [t for t in args if t.startswith("-")]
-        local_only = not pkgs or all(t in {".", "./"} or t.startswith(("./", "../")) for t in pkgs)
-        if any(f in {"-r", "--requirement", "-e", "--editable"} for f in flags) and local_only:
+        local_only = not pkgs or all(
+            t in {".", "./"} or t.startswith(("./", "../")) for t in pkgs
+        )
+        if (
+            any(f in {"-r", "--requirement", "-e", "--editable"} for f in flags)
+            and local_only
+        ):
             local_only = True
         reqfile = any(f in {"-r", "--requirement"} for f in flags)
         if not (local_only or reqfile):
@@ -221,7 +270,9 @@ def _classify(a: ShellAnalysis, cmd: str, args: list[str], argv: list[str],
         else:
             a.add(Verdict.ASK, "pipes data into a shell")
 
-    if cmd in SHELLS | {"source", ".", "eval"} and "<<<" in args:      # here-string: the string is a script
+    if (
+        cmd in SHELLS | {"source", ".", "eval"} and "<<<" in args
+    ):  # here-string: the string is a script
         i = args.index("<<<")
         if i + 1 < len(args):
             a.merge(analyze(args[i + 1], depth + 1))
@@ -254,13 +305,17 @@ def _classify(a: ShellAnalysis, cmd: str, args: list[str], argv: list[str],
         a.has_sensitive_read = True
         a.add(Verdict.ASK, "dumps the environment (may contain secrets)")
 
-    if cmd == "rm" and any(re.match(r"^-[a-zA-Z]*[rR]", t) or t == "--recursive" for t in args):
+    if cmd == "rm" and any(
+        re.match(r"^-[a-zA-Z]*[rR]", t) or t == "--recursive" for t in args
+    ):
         targets = [t for t in args if not t.startswith("-")]
         if any(t in {"/", "/*", "~", "~/", "$HOME", "${HOME}", "*"} for t in targets):
             a.add(Verdict.BLOCK, "recursive delete of root/home")
         else:
             a.add(Verdict.ASK, "recursive delete")
-    if cmd.startswith("mkfs") or (cmd == "dd" and any(t.startswith("of=/dev/") for t in args)):
+    if cmd.startswith("mkfs") or (
+        cmd == "dd" and any(t.startswith("of=/dev/") for t in args)
+    ):
         a.add(Verdict.BLOCK, "writes directly to a block device")
     if cmd == "chmod" and "-R" in args and any(t in {"777", "a+rwx"} for t in args):
         a.add(Verdict.ASK, "recursive world-writable chmod")

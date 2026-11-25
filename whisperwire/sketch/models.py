@@ -1,4 +1,5 @@
 """Shared data types."""
+
 from __future__ import annotations
 
 import json
@@ -26,8 +27,8 @@ def strictest(verdicts) -> Verdict:
 
 @dataclass
 class ToolCall:
-    source: str                 # "mcp" | "shell"
-    tool: str                   # MCP tool name, or "shell.exec"
+    source: str  # "mcp" | "shell"
+    tool: str  # MCP tool name, or "shell.exec"
     arguments: dict
     server: str = ""
     call_id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
@@ -35,7 +36,7 @@ class ToolCall:
 
 @dataclass
 class Finding:
-    check: str                  # permission | task_fit | egress | taint | shell
+    check: str  # permission | task_fit | egress | taint | shell
     verdict: Verdict
     reason: str
 
@@ -59,6 +60,7 @@ class SessionContext:
     both interceptors: the proxy marks the session tainted when a tool result
     arrives, and the shell guard sees it.
     """
+
     state_dir: Path
     workspace: Path
     task: str = ""
@@ -72,7 +74,9 @@ class SessionContext:
 
     @property
     def untrusted_seen(self) -> bool:
-        return self.untrusted_at > 0 and (time.time() - self.untrusted_at) < self.taint_ttl
+        return (
+            self.untrusted_at > 0 and (time.time() - self.untrusted_at) < self.taint_ttl
+        )
 
     def mark_untrusted(self, source: str) -> None:
         self.untrusted_at = time.time()
@@ -83,7 +87,9 @@ class SessionContext:
     def refresh(self) -> None:
         try:
             data = json.loads(self._file.read_text())
-            self.untrusted_at = max(self.untrusted_at, float(data.get("untrusted_at", 0)))
+            self.untrusted_at = max(
+                self.untrusted_at, float(data.get("untrusted_at", 0))
+            )
             for s in data.get("sources", []):
                 if s not in self.untrusted_sources:
                     self.untrusted_sources.append(s)
@@ -99,8 +105,14 @@ class SessionContext:
         try:
             self.state_dir.mkdir(parents=True, exist_ok=True)
             tmp = self._file.with_suffix(f".{os.getpid()}.tmp")
-            tmp.write_text(json.dumps({"untrusted_at": self.untrusted_at,
-                                       "sources": self.untrusted_sources}))
+            tmp.write_text(
+                json.dumps(
+                    {
+                        "untrusted_at": self.untrusted_at,
+                        "sources": self.untrusted_sources,
+                    }
+                )
+            )
             tmp.replace(self._file)
         except OSError:
             pass

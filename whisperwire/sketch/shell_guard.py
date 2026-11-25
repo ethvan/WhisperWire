@@ -9,6 +9,7 @@ For `-c` (and piped scripts) we analyze the command, apply policy, then exec the
 real shell (AGENTGUARD_REAL_SHELL, default /bin/bash). Interactive sessions are
 passed through unguarded; agents don't use them.
 """
+
 from __future__ import annotations
 
 import os
@@ -24,7 +25,7 @@ BLOCKED_EXIT = 126
 def _real_shell() -> str:
     real = os.environ.get("AGENTGUARD_REAL_SHELL", "/bin/bash")
     if os.path.realpath(real) == os.path.realpath(sys.argv[0]):
-        return "/bin/bash"                       # avoid recursing into ourselves
+        return "/bin/bash"  # avoid recursing into ourselves
     return real
 
 
@@ -54,9 +55,9 @@ def main(argv: list[str] | None = None) -> int:
         if not allowed:
             print(msg, file=sys.stderr)
             return BLOCKED_EXIT
-        os.execv(real, [real, *argv])             # never returns
+        os.execv(real, [real, *argv])  # never returns
 
-    if not sys.stdin.isatty() and not argv:       # script piped to stdin
+    if not sys.stdin.isatty() and not argv:  # script piped to stdin
         script = sys.stdin.read()
         allowed, msg = guard(script)
         if not allowed:
@@ -64,7 +65,7 @@ def main(argv: list[str] | None = None) -> int:
             return BLOCKED_EXIT
         return subprocess.run([real], input=script, text=True).returncode
 
-    os.execv(real, [real, *argv])                 # interactive / script file: passthrough
+    os.execv(real, [real, *argv])  # interactive / script file: passthrough
     return 0
 
 

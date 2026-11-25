@@ -29,15 +29,22 @@ class McpProxy:
         self.cmd, self.rt, self.server = upstream_cmd, rt, server_name
         self.proc: subprocess.Popen | None = None
         self._out_lock = threading.Lock()
-        self._pending: dict[Any, str] = {}      # request id -> tool name | LIST_MARK
+        self._pending: dict[Any, str] = {}  # request id -> tool name | LIST_MARK
         self._pending_lock = threading.Lock()
 
     # ---- lifecycle ----------------------------------------------------
     def run(self) -> int:
         sys.stdin.reconfigure(encoding="utf-8")
         sys.stdout.reconfigure(encoding="utf-8")
-        self.proc = subprocess.Popen(self.cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                     stderr=None, text=True, encoding="utf-8", bufsize=1)
+        self.proc = subprocess.Popen(
+            self.cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=None,
+            text=True,
+            encoding="utf-8",
+            bufsize=1,
+        )
         threading.Thread(target=self._pump_upstream, daemon=True).start()
         try:
             for line in sys.stdin:
@@ -59,7 +66,7 @@ class McpProxy:
             msg = json.loads(line)
         except ValueError:
             return self._to_upstream(line.rstrip("\n"))
-        if isinstance(msg, list):                               # JSON-RPC batch
+        if isinstance(msg, list):  # JSON-RPC batch
             kept = [m for m in (self._filter(x) for x in msg) if m is not None]
             if kept:
                 self._to_upstream(json.dumps(kept))
@@ -78,15 +85,28 @@ class McpProxy:
         if method != "tools/call":
             return msg
         params = msg.get("params") or {}
-        call = ToolCall("mcp", str(params.get("name", "")), params.get("arguments") or {}, self.server)
+        call = ToolCall(
+            "mcp",
+            str(params.get("name", "")),
+            params.get("arguments") or {},
+            self.server,
+        )
         allowed, _, blocked_msg = self.rt.decide(call)
         if allowed:
             if mid is not None:
                 self._set_pending(mid, call.tool)
             return msg
         if mid is not None:
-            self._to_client({"jsonrpc": "2.0", "id": mid, "result": {
-                "content": [{"type": "text", "text": blocked_msg}], "isError": True}})
+            self._to_client(
+                {
+                    "jsonrpc": "2.0",
+                    "id": mid,
+                    "result": {
+                        "content": [{"type": "text", "text": blocked_msg}],
+                        "isError": True,
+                    },
+                }
+            )
         return None
 
     # ---- upstream -> client ------------------------------------------
@@ -95,13 +115,13 @@ class McpProxy:
         for line in self.proc.stdout:
             try:
                 msg = json.loads(line)
-                for m in (msg if isinstance(msg, list) else [msg]):
+                for m in msg if isinstance(msg, list) else [msg]:
                     self._observe(m)
             except ValueError:
                 pass
             self._write_client(line if line.endswith("\n") else line + "\n")
         sys.stdout.flush()
-        os._exit(self.proc.wait())          # upstream died: end the session
+        os._exit(self.proc.wait())  # upstream died: end the session
 
     def _observe(self, m: Any) -> None:
         if not isinstance(m, dict) or "method" in m or "id" not in m:

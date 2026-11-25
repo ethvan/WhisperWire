@@ -1,4 +1,5 @@
 """Ask-the-user step. Reads from /dev/tty because stdin/stdout carry the MCP protocol."""
+
 from __future__ import annotations
 
 import sys

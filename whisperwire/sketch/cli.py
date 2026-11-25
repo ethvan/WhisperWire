@@ -1,4 +1,5 @@
 """agentguard CLI: mcp-proxy | check | logs | viewer | init | reset"""
+
 from __future__ import annotations
 
 import argparse
@@ -14,8 +15,11 @@ from .runtime import build_runtime
 
 def cmd_proxy(a) -> int:
     from .mcp_proxy import McpProxy
+
     if not a.upstream:
-        print("usage: agentguard mcp-proxy [opts] -- <server command...>", file=sys.stderr)
+        print(
+            "usage: agentguard mcp-proxy [opts] -- <server command...>", file=sys.stderr
+        )
         return 2
     up = a.upstream[1:] if a.upstream[0] == "--" else a.upstream
     rt = build_runtime(a.config, a.task, a.on_ask)
@@ -43,20 +47,27 @@ def cmd_logs(a) -> int:
         print("no audit log yet:", path)
         return 0
     rows = [json.loads(l) for l in path.read_text().splitlines() if l.strip()]
-    calls = [r for r in rows if "final" in r]      # events (injection flags etc.) can carry a "tool" too
-    for r in calls[-a.n:]:
+    calls = [
+        r for r in rows if "final" in r
+    ]  # events (injection flags etc.) can carry a "tool" too
+    for r in calls[-a.n :]:
         why = r["findings"][0]["reason"] if r["findings"] else ""
-        print(f'{r["call_id"]} {r["source"]:5} {r["tool"][:24]:24} {r["final"]:5} {why}')
+        print(
+            f"{r['call_id']} {r['source']:5} {r['tool'][:24]:24} {r['final']:5} {why}"
+        )
     c = Counter(r["final"] for r in calls)
     lat = sorted(r["latency_ms"] for r in calls) or [0]
     prompts = sum(1 for r in calls if r["policy_verdict"] == "ask")
-    print(f"\n{len(calls)} calls | allow {c['allow']} block {c['block']} | prompts {prompts} "
-          f"| median policy latency {lat[len(lat)//2]:.2f} ms")
+    print(
+        f"\n{len(calls)} calls | allow {c['allow']} block {c['block']} | prompts {prompts} "
+        f"| median policy latency {lat[len(lat) // 2]:.2f} ms"
+    )
     return 0
 
 
 def cmd_viewer(a) -> int:
     from . import viewer
+
     src = Path(a.log) if a.log else build_runtime(a.config).auditor.path
     if not src.exists():
         print("no audit log yet:", src)
@@ -66,6 +77,7 @@ def cmd_viewer(a) -> int:
     print(f"wrote {out} ({n} decisions)")
     if a.open:
         import webbrowser
+
         webbrowser.open(out.resolve().as_uri())
     return 0
 
@@ -98,7 +110,9 @@ def main(argv=None) -> int:
     p.add_argument("upstream", nargs=argparse.REMAINDER)
     p.set_defaults(fn=cmd_proxy)
 
-    p = sub.add_parser("check", help="dry-run a command (or --tool NAME with JSON args)")
+    p = sub.add_parser(
+        "check", help="dry-run a command (or --tool NAME with JSON args)"
+    )
     p.add_argument("command", nargs="?")
     p.add_argument("--tool")
     p.add_argument("--task", default="")
@@ -112,7 +126,9 @@ def main(argv=None) -> int:
     p.add_argument("--log", help="audit.jsonl to read (default: this workspace's)")
     p.add_argument("--open", action="store_true", help="open in the browser")
     p.set_defaults(fn=cmd_viewer)
-    sub.add_parser("init", help="write a starter agentguard.toml").set_defaults(fn=cmd_init)
+    sub.add_parser("init", help="write a starter agentguard.toml").set_defaults(
+        fn=cmd_init
+    )
     sub.add_parser("reset", help="clear taint state").set_defaults(fn=cmd_reset)
 
     a = ap.parse_args(argv)
