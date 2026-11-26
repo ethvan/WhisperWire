@@ -15,7 +15,6 @@ async def run_proxy(config: ProxyConfig):
     logger.info("Initializing whisperWire...")
 
     adapter = MCPAdapter(config=config)
-
     logger.info("Starting MCP adapter...")
 
     await adapter.run()
