@@ -1,4 +1,4 @@
-"""agentguard CLI: mcp-proxy | check | logs | viewer | init | reset"""
+"""whisperwire-sketch CLI: mcp-proxy | check | logs | viewer | init | reset"""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ def cmd_proxy(a) -> int:
 
     if not a.upstream:
         print(
-            "usage: agentguard mcp-proxy [opts] -- <server command...>", file=sys.stderr
+            "usage: whisperwire-sketch mcp-proxy [opts] -- <server command...>", file=sys.stderr
         )
         return 2
     up = a.upstream[1:] if a.upstream[0] == "--" else a.upstream
@@ -83,12 +83,12 @@ def cmd_viewer(a) -> int:
 
 
 def cmd_init(a) -> int:
-    p = Path("agentguard.toml")
+    p = Path("whisperwire.toml")
     if p.exists():
-        print("agentguard.toml already exists")
+        print("whisperwire.toml already exists")
         return 1
     p.write_text(DEFAULT_TOML)
-    print("wrote agentguard.toml")
+    print("wrote whisperwire.toml")
     return 0
 
 
@@ -99,7 +99,7 @@ def cmd_reset(a) -> int:
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(prog="agentguard")
+    ap = argparse.ArgumentParser(prog="whisperwire-sketch")
     ap.add_argument("--config", type=Path, default=None)
     sub = ap.add_subparsers(dest="cmd", required=True)
 
@@ -122,11 +122,11 @@ def main(argv=None) -> int:
     p.add_argument("-n", type=int, default=20)
     p.set_defaults(fn=cmd_logs)
     p = sub.add_parser("viewer", help="render the audit log as a static HTML page")
-    p.add_argument("-o", "--output", default="agentguard-log.html")
+    p.add_argument("-o", "--output", default="whisperwire-log.html")
     p.add_argument("--log", help="audit.jsonl to read (default: this workspace's)")
     p.add_argument("--open", action="store_true", help="open in the browser")
     p.set_defaults(fn=cmd_viewer)
-    sub.add_parser("init", help="write a starter agentguard.toml").set_defaults(
+    sub.add_parser("init", help="write a starter whisperwire.toml").set_defaults(
         fn=cmd_init
     )
     sub.add_parser("reset", help="clear taint state").set_defaults(fn=cmd_reset)

@@ -12,7 +12,7 @@ import mcp
 def parse_args():
     # TODO: Potential epilog here
     parser = argparse.ArgumentParser(
-        description="entrypoint for whisperWire, an Agent Security Gateway."
+        description="entrypoint for WhisperWire, an Agent Security Gateway."
     )
 
     parser.add_argument(

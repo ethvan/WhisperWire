@@ -1,4 +1,4 @@
-"""Static HTML log viewer. `agentguard viewer` renders .agentguard/audit.jsonl into one self-contained page.
+"""Static HTML log viewer. `whisperwire-sketch viewer` renders .whisperwire/audit.jsonl into one self-contained page.
 
 Filters (verdict / check / source / free text), a decision timeline, per-tool block rates,
 and click-to-expand rows. Log text is attacker-influenced, so the page only ever uses textContent.
@@ -21,7 +21,7 @@ def load_rows(path: Path) -> list[dict]:
     return rows
 
 
-def render(rows: list[dict], title: str = "AgentGuard log") -> str:
+def render(rows: list[dict], title: str = "WhisperWire log") -> str:
     data = (
         json.dumps(rows, ensure_ascii=False)
         .replace("</", "<\\/")
@@ -30,7 +30,7 @@ def render(rows: list[dict], title: str = "AgentGuard log") -> str:
     return TEMPLATE.replace("__DATA__", data).replace("__TITLE__", title)
 
 
-def write(audit_path: Path, out: Path, title: str = "AgentGuard log") -> int:
+def write(audit_path: Path, out: Path, title: str = "WhisperWire log") -> int:
     rows = load_rows(audit_path)
     Path(out).write_text(render(rows, title), encoding="utf-8")
     return sum(1 for r in rows if "final" in r)

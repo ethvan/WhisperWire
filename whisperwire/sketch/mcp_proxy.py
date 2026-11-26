@@ -1,6 +1,6 @@
 """MCP stdio proxy.
 
-    agent  <--stdio-->  whisperWire  <--stdio-->  real MCP server
+    agent  <--stdio-->  WhisperWire  <--stdio-->  real MCP server
 
 MCP's stdio transport is newline-delimited JSON-RPC 2.0. We forward everything
 untouched except `tools/call` requests, which go through the policy engine first.

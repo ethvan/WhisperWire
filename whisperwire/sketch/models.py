@@ -54,7 +54,7 @@ class Decision:
 
 @dataclass
 class SessionContext:
-    """State shared by the MCP proxy and shell guard via .agentguard/session.json.
+    """State shared by the MCP proxy and shell guard via .whisperwire/session.json.
 
     Lets the 'was this triggered by untrusted content?' question work across
     both interceptors: the proxy marks the session tainted when a tool result

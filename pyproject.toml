@@ -13,6 +13,8 @@ test = ["pytest", "matplotlib"]
 
 [project.scripts]
 whisperwire = "whisperwire.whisperwire:main"
+whisperwire-sketch = "whisperwire.sketch.cli:main"
+whisperwire-shell = "whisperwire.sketch.shell_guard:main"
 
 [build-system]
 requires = ["hatchling"]

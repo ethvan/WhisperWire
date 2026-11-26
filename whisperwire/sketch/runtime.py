@@ -36,7 +36,7 @@ class Runtime:
             why = "; ".join(d.reasons) or "policy"
             who = "denied by user" if d.verdict == Verdict.ASK else "blocked by policy"
             msg = (
-                f"AgentGuard {who}: {why}. Do not retry this action; "
+                f"WhisperWire {who}: {why}. Do not retry this action; "
                 f"tell the user what you were trying to do and why."
             )
         return allowed, d, msg
@@ -46,16 +46,16 @@ def build_runtime(
     config: Optional[Path] = None, task: str = "", on_ask: Optional[str] = None
 ) -> Runtime:
     cfg: PolicyConfig = load_config(config)
-    state_dir = Path(os.environ.get("AGENTGUARD_STATE", cfg.workspace / ".agentguard"))
+    state_dir = Path(os.environ.get("WHISPERWIRE_STATE", cfg.workspace / ".whisperwire"))
     ctx = SessionContext(
         state_dir=state_dir,
         workspace=cfg.workspace,
-        task=task or os.environ.get("AGENTGUARD_TASK", ""),
+        task=task or os.environ.get("WHISPERWIRE_TASK", ""),
         taint_ttl=cfg.taint_ttl,
     )
     ctx.refresh()
     engine = PolicyEngine(cfg, ctx)
-    mode = on_ask or os.environ.get("AGENTGUARD_ON_ASK") or cfg.on_ask
+    mode = on_ask or os.environ.get("WHISPERWIRE_ON_ASK") or cfg.on_ask
     return Runtime(
         engine,
         Auditor(state_dir, uuid.uuid4().hex[:8], engine.env.values),

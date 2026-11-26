@@ -5,12 +5,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-from agentguard import viewer
-from agentguard.approvals import Approver
-from agentguard.audit import Auditor
-from agentguard.policy import PolicyConfig, PolicyEngine
-from agentguard.models import SessionContext
-from agentguard.runtime import Runtime
+from whisperwire.sketch import viewer
+from whisperwire.sketch.approvals import Approver
+from whisperwire.sketch.audit import Auditor
+from whisperwire.sketch.policy import PolicyConfig, PolicyEngine
+from whisperwire.sketch.models import SessionContext
+from whisperwire.sketch.runtime import Runtime
 from attacks.runner import SCENARIOS
 
 tmp = Path(tempfile.mkdtemp())
@@ -30,5 +30,5 @@ for i, s in enumerate(SCENARIOS):
     Runtime(eng, aud, Approver("deny")).decide(s.call)
     time.sleep(0.01)
 out = ROOT / "viewer" / "demo.html"
-n = viewer.write(tmp / "audit.jsonl", out, "AgentGuard demo: attack suite")
+n = viewer.write(tmp / "audit.jsonl", out, "WhisperWire demo: attack suite")
 print(f"wrote {out} ({n} decisions)")

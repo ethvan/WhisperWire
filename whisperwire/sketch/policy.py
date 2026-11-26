@@ -97,8 +97,8 @@ class PolicyConfig:
 
 def load_config(path: Optional[Path]) -> PolicyConfig:
     cfg = PolicyConfig()
-    if path is None and Path("agentguard.toml").exists():
-        path = Path("agentguard.toml")
+    if path is None and Path("whisperwire.toml").exists():
+        path = Path("whisperwire.toml")
     if path is None:
         return cfg
     data = tomllib.loads(Path(path).read_text())

@@ -3,8 +3,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-from agentguard.models import SessionContext, ToolCall, Verdict
-from agentguard.policy import PolicyConfig, PolicyEngine
+from whisperwire.sketch.models import SessionContext, ToolCall, Verdict
+from whisperwire.sketch.policy import PolicyConfig, PolicyEngine
 
 
 def engine(tmp, tainted=False):
@@ -62,12 +62,12 @@ class ShellPolicy(unittest.TestCase):
 class McpProxy(unittest.TestCase):
     def test_end_to_end(self):
         tmp = tempfile.mkdtemp()
-        env = {**os.environ, "PYTHONPATH": str(ROOT), "AGENTGUARD_STATE": tmp}
+        env = {**os.environ, "PYTHONPATH": str(ROOT), "WHISPERWIRE_STATE": tmp}
         p = subprocess.Popen(
             [
                 sys.executable,
                 "-m",
-                "agentguard.cli",
+                "whisperwire.sketch.cli",
                 "mcp-proxy",
                 "--on-ask",
                 "deny",

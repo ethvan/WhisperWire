@@ -23,7 +23,7 @@ class Approver:
         self.prompts += 1
         try:
             with open("/dev/tty", "r+") as tty:
-                tty.write("\n\u26a0  AgentGuard: approval needed\n")
+                tty.write("\n\u26a0  WhisperWire: approval needed\n")
                 tty.write(f"   {call.source}:{call.tool}\n")
                 for k, v in redact(call.arguments, 200).items():
                     tty.write(f"   {k}: {v}\n")
@@ -35,5 +35,5 @@ class Approver:
             ok = ans in {"y", "yes"}
             return ok, "user-allow" if ok else "user-deny"
         except OSError:
-            print("AgentGuard: no terminal for approval, denying", file=sys.stderr)
+            print("WhisperWire: no terminal for approval, denying", file=sys.stderr)
             return False, "no-tty-deny"

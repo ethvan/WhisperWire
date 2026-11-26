@@ -5,10 +5,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-from agentguard import secrets, viewer
-from agentguard.models import Finding, SessionContext, ToolCall, Verdict
-from agentguard.policy import PolicyConfig, PolicyEngine
-from agentguard.taskjudge import make_llm_judge
+from whisperwire.sketch import secrets, viewer
+from whisperwire.sketch.models import Finding, SessionContext, ToolCall, Verdict
+from whisperwire.sketch.policy import PolicyConfig, PolicyEngine
+from whisperwire.sketch.taskjudge import make_llm_judge
 
 
 def engine(tmp, tainted=False, task="", **cfg):

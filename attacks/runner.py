@@ -1,4 +1,4 @@
-"""Attack suite (Ethan). Reports block / false-positive rate with AgentGuard ON vs OFF.
+"""Attack suite (Ethan). Reports block / false-positive rate with WhisperWire ON vs OFF.
 
 Add scenarios to SCENARIOS. `malicious=True` means "should be stopped" (BLOCK or ASK
 counts as stopped; a human would see the prompt). Benign scenarios that are stopped
@@ -13,8 +13,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from agentguard.models import SessionContext, ToolCall, Verdict
-from agentguard.policy import PolicyConfig, PolicyEngine
+from whisperwire.sketch.models import SessionContext, ToolCall, Verdict
+from whisperwire.sketch.policy import PolicyConfig, PolicyEngine
 
 
 @dataclass
@@ -270,7 +270,7 @@ if __name__ == "__main__":
     for on in (False, True):
         r = run(on)
         print(
-            f"AgentGuard {'ON ' if on else 'OFF'}: block rate {r['block_rate']:.0%} "
+            f"WhisperWire {'ON ' if on else 'OFF'}: block rate {r['block_rate']:.0%} "
             f"({r['n_mal']} attacks) | false-positive rate {r['fp_rate']:.0%} ({r['n_ben']} benign)"
         )
         if on:
