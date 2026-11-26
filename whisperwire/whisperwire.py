@@ -4,6 +4,7 @@ import logging
 from proxy.config import parse_config
 from proxy.app import run_proxy
 
+
 def main():
     config = parse_config()
 

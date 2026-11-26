@@ -1,4 +1,3 @@
-
 import asyncio
 import json
 from datetime import datetime, timezone
@@ -90,4 +89,3 @@ class AuditLogger:
     @staticmethod
     def _timestamp() -> str:
         return datetime.now(timezone.utc).isoformat()
-

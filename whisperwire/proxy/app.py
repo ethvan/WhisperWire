@@ -9,6 +9,7 @@ from proxy.inspection import InspectionEngine
 
 logger = logging.getLogger("whisperwire")
 
+
 async def run_proxy(config: ProxyConfig):
     """
     Assemble and start the whisperWire application.

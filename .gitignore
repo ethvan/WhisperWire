@@ -2,8 +2,10 @@ __pycache__/
 .whisperwire/
 .DS_Store
 .env
-.gemini/settings.json
 .venv/
 *.egg-info/
 
 cases/payloads/
+
+whisperwire/logs
+whisperwire/.sketch

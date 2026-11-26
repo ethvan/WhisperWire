@@ -1,4 +1,4 @@
-
+import json
 import logging
 from contextlib import asynccontextmanager
 
@@ -10,6 +10,7 @@ from fastapi.responses import StreamingResponse, Response
 from proxy.config import ProxyConfig
 from proxy.audit import AuditLogger
 from proxy.inspection import InspectionEngine
+from proxy.models import InspectionContext
 
 logger = logging.getLogger("whisperwire.adapter")
 
@@ -26,11 +27,12 @@ HOP_BY_HOP_HEADERS = {
 
 
 class MCPAdapter:
-    def __init__(self,
-                 config: ProxyConfig,
-                 auditor: AuditLogger,
-                 inspection_engine: InspectionEngine,
-                 ):
+    def __init__(
+        self,
+        config: ProxyConfig,
+        auditor: AuditLogger,
+        inspection_engine: InspectionEngine,
+    ):
 
         self.config = config
         self.auditor = auditor
@@ -54,6 +56,83 @@ class MCPAdapter:
         async def proxy_request(request: Request):
             return await self._forward_request(request)
 
+    async def _inspect_inbound(self, request: Request, body: bytes) -> None:
+        """
+        Inspect and audit inbound MCP messages.
+
+        The original request body is never modified.
+        """
+        if not body:
+            return
+
+        # Only inspect JSON request bodies.
+        content_type = request.headers.get("content-type", "")
+        if "application/json" not in content_type.lower():
+            logger.debug(
+                "Skipping inbound inspection for content type: %s",
+                content_type,
+            )
+            return
+
+        try:
+            payload = json.loads(body)
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            logger.warning("Unable to parse inbound MCP request as JSON")
+            return
+
+        # MCP supports individual JSON-RPC messages and batches.
+        messages = payload if isinstance(payload, list) else [payload]
+
+        session_id = request.headers.get("mcp-session-id")
+
+        for message in messages:
+            if not isinstance(message, dict):
+                logger.warning("Skipping non-object JSON-RPC message in request")
+                continue
+
+            request_id = message.get("id")
+
+            context = InspectionContext(
+                direction="inbound",
+                protocol="mcp",
+                session_id=session_id,
+                request_id=(str(request_id) if request_id is not None else None),
+            )
+
+            # Record the inbound traffic.
+            await self.auditor.log_traffic(
+                context=context,
+                message=message,
+                metadata={
+                    "http_method": request.method,
+                    "mcp_method": message.get("method"),
+                    "content_type": content_type,
+                },
+            )
+
+            # Run all registered security modules.
+            reports = await self.inspection_engine.inspect(
+                message=message,
+                context=context,
+            )
+
+            # Record any findings.
+            for report in reports:
+                if not report.success:
+                    logger.error(
+                        "Inspection module '%s' failed: %s",
+                        report.module_id,
+                        report.error,
+                    )
+                    continue
+
+                for finding in report.findings:
+                    await self.auditor.log_alert(
+                        context=context,
+                        module_id=report.module_id,
+                        finding=finding,
+                    )
+
     async def _forward_request(self, request: Request):
         upstream_url = self.config.upstream_url
 
@@ -68,6 +147,13 @@ class MCPAdapter:
         }
 
         body = await request.body()
+
+        try:
+            await self._inspect_inbound(request, body)
+        except Exception:
+            logger.exception(
+                "Inbound inspection or auditing failed; continuing in observe mode."
+            )
 
         upstream_request = self.client.build_request(
             method=request.method,
@@ -90,13 +176,10 @@ class MCPAdapter:
         response_headers = {
             key: value
             for key, value in upstream_response.headers.items()
-            if key.lower() not in HOP_BY_HOP_HEADERS
-            and key.lower() != "content-length"
+            if key.lower() not in HOP_BY_HOP_HEADERS and key.lower() != "content-length"
         }
 
-        if request.method == "HEAD" or upstream_response.status_code in {
-            204, 304
-        }:
+        if request.method == "HEAD" or upstream_response.status_code in {204, 304}:
             await upstream_response.aclose()
             return Response(
                 status_code=upstream_response.status_code,
@@ -126,4 +209,3 @@ class MCPAdapter:
 
         server = uvicorn.Server(config)
         await server.serve()
-

@@ -1,4 +1,3 @@
-
 import json
 import pytest
 
@@ -67,9 +66,7 @@ async def test_logs_traffic_without_body(tmp_path, context):
 
 @pytest.mark.asyncio
 async def test_logs_traffic_with_body(tmp_path, context):
-    logger = AuditLogger(
-        config=make_config(tmp_path, log_bodies=True)
-    )
+    logger = AuditLogger(config=make_config(tmp_path, log_bodies=True))
 
     message = {"method": "tools/call"}
 
@@ -126,4 +123,3 @@ async def test_multiple_writes(tmp_path, context):
     ]
 
     assert len(records) == 5
-
