@@ -1,0 +1,13 @@
+services:
+  # whisperwire:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.ags
+  #   container_name: whisperwire
+  mcp-server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.server
+    container_name: mcp-server
+    ports:
+      - "9000:9000"

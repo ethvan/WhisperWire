@@ -1,0 +1,15 @@
+[project]
+name = "whisperwire"
+version = "0.1.0"
+description = "An Agent Security Gateway between agents and their tools"
+requires-python = ">=3.11"
+dependencies = [
+  "mcp[cli]>=2,<3",
+]
+
+[project.scripts]
+whisperwire = "whisperwire.whisperwire:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

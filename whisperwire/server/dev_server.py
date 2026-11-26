@@ -1,0 +1,17 @@
+from mcp.server import MCPServer
+
+mcp = MCPServer("Development Server")
+
+@mcp.tool()
+def echo(message:str) -> str:
+    """
+    Returns supplied message.
+    """
+    return message
+
+@mcp.tool()
+def greeting(name:str) ->str:
+    return f"Hello {name}!"
+
+if __name__ == "__main__":
+    mcp.run(transport="streamable-http", port=9000, host="0.0.0.0")
