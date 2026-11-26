@@ -6,6 +6,7 @@ from proxy.adapters.mcp_adapter import MCPAdapter
 from proxy.audit import AuditLogger
 from proxy.modules.registry import ModuleRegistry
 from proxy.inspection import InspectionEngine
+from proxy.modules.test_module import TestModule
 
 logger = logging.getLogger("whisperwire")
 
@@ -20,7 +21,10 @@ async def run_proxy(config: ProxyConfig):
     # Initialize shared components
     auditor = AuditLogger(config)
 
+    # Register modules
     registry = ModuleRegistry()
+    registry.register(TestModule())
+
     inspection_engine = InspectionEngine(registry)
 
     # Initialize MCP adapter with shared dependencies
