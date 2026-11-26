@@ -8,6 +8,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse, Response
 
 from proxy.config import ProxyConfig
+from proxy.audit import AuditLogger
+from proxy.inspection import InspectionEngine
 
 logger = logging.getLogger("whisperwire.adapter")
 
@@ -24,8 +26,16 @@ HOP_BY_HOP_HEADERS = {
 
 
 class MCPAdapter:
-    def __init__(self, config: ProxyConfig):
+    def __init__(self,
+                 config: ProxyConfig,
+                 auditor: AuditLogger,
+                 inspection_engine: InspectionEngine,
+                 ):
+
         self.config = config
+        self.auditor = auditor
+        self.inspection_engine = inspection_engine
+
         self.client = httpx.AsyncClient(timeout=None)
 
         self.app = FastAPI(lifespan=self._lifespan)

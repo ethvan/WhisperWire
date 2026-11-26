@@ -1,20 +1,17 @@
+
 import asyncio
 import json
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 
+from proxy.config import ProxyConfig
 from proxy.models import Finding, InspectionContext
 
 
 class AuditLogger:
-    def __init__(
-        self,
-        log_dir: Path,
-        log_bodies: bool = False,
-    ):
-        self.log_dir = Path(log_dir)
-        self.log_bodies = log_bodies
+    def __init__(self, config: ProxyConfig):
+        self.log_dir = config.log_dir
+        self.log_bodies = config.log_bodies
 
         self.traffic_path = self.log_dir / "traffic.jsonl"
         self.alerts_path = self.log_dir / "alerts.jsonl"
@@ -64,7 +61,7 @@ class AuditLogger:
                 "category": finding.category,
                 "description": finding.description,
                 # Evidence may contain sensitive information.
-                # ergo only log if explicitly asked for.
+                # Only log if explicitly requested.
                 "evidence": finding.evidence if self.log_bodies else None,
             },
         }
@@ -73,7 +70,7 @@ class AuditLogger:
 
     async def _write(
         self,
-        path: Path,
+        path,
         record: dict[str, Any],
     ) -> None:
         line = json.dumps(record, ensure_ascii=False) + "\n"
@@ -86,10 +83,11 @@ class AuditLogger:
             )
 
     @staticmethod
-    def _append_line(path: Path, line: str) -> None:
+    def _append_line(path, line: str) -> None:
         with path.open("a", encoding="utf-8") as file:
             file.write(line)
 
     @staticmethod
     def _timestamp() -> str:
         return datetime.now(timezone.utc).isoformat()
+

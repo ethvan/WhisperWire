@@ -1,8 +1,28 @@
+
 import json
 import pytest
 
+from pathlib import Path
+
 from proxy.audit import AuditLogger
+from proxy.config import ProxyConfig
 from proxy.models import Finding, InspectionContext
+
+
+def make_config(
+    log_dir: Path,
+    log_bodies: bool = False,
+) -> ProxyConfig:
+    return ProxyConfig(
+        listen_host="127.0.0.1",
+        listen_port=8080,
+        upstream_url="http://127.0.0.1:9000/mcp",
+        mode="observe",
+        log_dir=log_dir,
+        rules_file=None,
+        pins_file=None,
+        log_bodies=log_bodies,
+    )
 
 
 @pytest.fixture
@@ -19,7 +39,7 @@ def context():
 async def test_creates_log_directory(tmp_path):
     log_dir = tmp_path / "logs"
 
-    AuditLogger(log_dir=log_dir)
+    AuditLogger(config=make_config(log_dir))
 
     assert log_dir.exists()
     assert log_dir.is_dir()
@@ -27,7 +47,7 @@ async def test_creates_log_directory(tmp_path):
 
 @pytest.mark.asyncio
 async def test_logs_traffic_without_body(tmp_path, context):
-    logger = AuditLogger(log_dir=tmp_path)
+    logger = AuditLogger(config=make_config(tmp_path))
 
     await logger.log_traffic(
         context,
@@ -47,7 +67,9 @@ async def test_logs_traffic_without_body(tmp_path, context):
 
 @pytest.mark.asyncio
 async def test_logs_traffic_with_body(tmp_path, context):
-    logger = AuditLogger(log_dir=tmp_path, log_bodies=True)
+    logger = AuditLogger(
+        config=make_config(tmp_path, log_bodies=True)
+    )
 
     message = {"method": "tools/call"}
 
@@ -63,7 +85,7 @@ async def test_logs_traffic_with_body(tmp_path, context):
 
 @pytest.mark.asyncio
 async def test_logs_security_alert(tmp_path, context):
-    logger = AuditLogger(log_dir=tmp_path)
+    logger = AuditLogger(config=make_config(tmp_path))
 
     finding = Finding(
         rule_id="TEST-001",
@@ -88,11 +110,12 @@ async def test_logs_security_alert(tmp_path, context):
     assert records[0]["event_type"] == "security_alert"
     assert records[0]["module_id"] == "prompt_shield"
     assert records[0]["finding"]["rule_id"] == "TEST-001"
+    assert records[0]["finding"]["evidence"] is None
 
 
 @pytest.mark.asyncio
 async def test_multiple_writes(tmp_path, context):
-    logger = AuditLogger(log_dir=tmp_path)
+    logger = AuditLogger(config=make_config(tmp_path))
 
     for _ in range(5):
         await logger.log_traffic(context)
