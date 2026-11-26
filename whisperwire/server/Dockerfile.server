@@ -2,15 +2,15 @@ FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 
 WORKDIR /app
 
-# Ensure logs stream immediately and uv installs to system Python
 ENV PYTHONUNBUFFERED=1 \
-    UV_SYSTEM_PYTHON=1 \
     UV_COMPILE_BYTECODE=1
 
+COPY pyproject.toml uv.lock ./
+
+RUN uv sync --frozen --no-dev --no-install-project
+
 COPY dev_server.py .
-COPY pyproject.toml . 
-RUN uv pip install --no-cache -r pyproject.toml
 
 EXPOSE 9000
 
-CMD ["python", "dev_server.py"]
+CMD ["uv", "run", "--no-sync", "python", "dev_server.py"]
