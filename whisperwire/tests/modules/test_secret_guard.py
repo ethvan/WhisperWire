@@ -6,9 +6,7 @@ import pytest
 from proxy.models import InspectionContext
 from proxy.modules.secret_guard import SecretGuard
 
-STRIPE_TEST_KEY = (
-    "sk_" + "live_" + "TESTONLY000000000000000000"
-)
+STRIPE_TEST_KEY = "sk_" + "live_" + "TESTONLY000000000000000000"
 
 
 @pytest.fixture
