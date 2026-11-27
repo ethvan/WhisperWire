@@ -20,7 +20,7 @@ class ModuleRegistry:
     # Interface for futzing w/ modules via security registry
     # External sources refer via module_id, not SecurityModule itself
 
-    def get(self, module_id: str):
+    def get(self, module_id: str) -> SecurityModule:
         return self._modules[module_id]
 
     def get_all(self) -> list[SecurityModule]:
