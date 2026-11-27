@@ -20,7 +20,7 @@ class InspectionEngine:
 
         Returns one InspectionReport per registered module.
         """
-        reports = []
+        reports: list[InspectionReport] = []
 
         for module in self.registry.get_all():
             try:

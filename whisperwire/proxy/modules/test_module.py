@@ -1,5 +1,6 @@
 from proxy.models import InspectionContext, InspectionReport, Finding
 
+
 class TestModule:
     @property
     def id(self) -> str:
