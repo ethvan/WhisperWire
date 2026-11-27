@@ -33,6 +33,7 @@ def context():
         request_id="test-request",
     )
 
+
 def test_creates_log_directory(tmp_path):
     log_dir = tmp_path / "logs"
 
