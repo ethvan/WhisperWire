@@ -33,9 +33,7 @@ def context():
         request_id="test-request",
     )
 
-
-@pytest.mark.asyncio
-async def test_creates_log_directory(tmp_path):
+def test_creates_log_directory(tmp_path):
     log_dir = tmp_path / "logs"
 
     AuditLogger(config=make_config(log_dir))

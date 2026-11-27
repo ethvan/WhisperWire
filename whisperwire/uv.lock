@@ -1732,7 +1732,6 @@ dependencies = [
 [package.optional-dependencies]
 test = [
     { name = "matplotlib" },
-    { name = "pytest" },
 ]
 
 [package.dev-dependencies]
@@ -1747,7 +1746,6 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27,<1" },
     { name = "matplotlib", marker = "extra == 'test'" },
     { name = "mcp", extras = ["cli"], specifier = ">=2,<3" },
-    { name = "pytest", marker = "extra == 'test'" },
     { name = "uvicorn", specifier = ">=0.30,<1" },
 ]
 provides-extras = ["rig", "test"]
