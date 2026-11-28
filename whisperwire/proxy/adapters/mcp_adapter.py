@@ -233,6 +233,25 @@ class MCPAdapter:
                         finding=finding,
                     )
 
+    def _is_outbound_inspection_candidate(
+        self,
+        request: Request,
+        request_body: bytes,
+        response_content_type: str,
+    ) -> bool:
+        if request.method != "POST":
+            return False
+
+        if "application/json" not in response_content_type.lower():
+            return False
+
+        try:
+            payload = json.loads(request_body)
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return False
+
+        return isinstance(payload, dict) and payload.get("method") == "tools/list"
+
     async def _forward_request(self, request: Request):
         upstream_url = self.config.upstream_url
 
@@ -282,6 +301,35 @@ class MCPAdapter:
         if request.method == "HEAD" or upstream_response.status_code in {204, 304}:
             await upstream_response.aclose()
             return Response(
+                status_code=upstream_response.status_code,
+                headers=response_headers,
+            )
+
+        response_content_type = upstream_response.headers.get("content-type", "")
+
+        if self._is_outbound_inspection_candidate(
+            request,
+            body,
+            response_content_type,
+        ):
+            response_body = await upstream_response.aread()
+
+            try:
+                await self._inspect_outbound(
+                    request=request,
+                    request_body=body,
+                    response_body=response_body,
+                    response_content_type=response_content_type,
+                )
+            except Exception:
+                logger.exception(
+                    "Outbound inspection or auditing failed; continuing in observe mode."
+                )
+            finally:
+                await upstream_response.aclose()
+
+            return Response(
+                content=response_body,
                 status_code=upstream_response.status_code,
                 headers=response_headers,
             )
