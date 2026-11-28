@@ -1,4 +1,3 @@
-
 import json
 from unittest.mock import AsyncMock, MagicMock
 
@@ -79,8 +78,7 @@ def make_request(headers=None):
     headers = headers or {}
 
     raw_headers = [
-        (key.lower().encode(), value.encode())
-        for key, value in headers.items()
+        (key.lower().encode(), value.encode()) for key, value in headers.items()
     ]
 
     return Request(
@@ -178,10 +176,7 @@ async def test_forward_request_inspects_tools_list_response(adapter):
 
     assert len(adapter.inspection_engine.calls) == 2
 
-    directions = [
-        call["context"].direction
-        for call in adapter.inspection_engine.calls
-    ]
+    directions = [call["context"].direction for call in adapter.inspection_engine.calls]
 
     assert directions == ["inbound", "outbound"]
 
@@ -284,9 +279,7 @@ async def test_forward_request_preserves_sse_streaming(adapter):
 
     assert isinstance(response, StreamingResponse)
 
-    received_body = b"".join(
-        [chunk async for chunk in response.body_iterator]
-    )
+    received_body = b"".join([chunk async for chunk in response.body_iterator])
 
     assert received_body == sse_body
 
@@ -406,10 +399,7 @@ async def test_inspects_each_advertised_tool(adapter):
 
     assert len(calls) == 3
 
-    inspected_names = [
-        call["message"]["tool"]["name"]
-        for call in calls
-    ]
+    inspected_names = [call["message"]["tool"]["name"] for call in calls]
 
     assert inspected_names == [
         "read_file",
@@ -521,4 +511,3 @@ async def test_malformed_request_does_not_trigger_inspection(adapter):
     )
 
     assert adapter.inspection_engine.calls == []
-
