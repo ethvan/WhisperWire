@@ -33,7 +33,7 @@ class InspectionEngine:
                         module_id=module.id,
                         findings=[],
                         success=False,
-                        error=f"{type(exc).__name__}: {exc}",
+                        error=type(exc).__name__,
                     )
                 )
 

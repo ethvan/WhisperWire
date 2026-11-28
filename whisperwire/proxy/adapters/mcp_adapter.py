@@ -133,6 +133,106 @@ class MCPAdapter:
                         finding=finding,
                     )
 
+    async def _inspect_outbound(
+        self,
+        request: Request,
+        request_body: bytes,
+        response_body: bytes,
+        response_content_type: str,
+    ) -> None:
+        """
+        Inspect tool definitions returned by an MCP tools/list request.
+
+        The original upstream response is never modified.
+        """
+        if not response_body:
+            return
+
+        if "application/json" not in response_content_type.lower():
+            return
+
+        try:
+            request_payload = json.loads(request_body)
+            response_payload = json.loads(response_body)
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            logger.warning("Unable to parse outbound MCP response as JSON")
+            return
+
+        # This initial implementation handles individual JSON-RPC messages.
+        if not isinstance(request_payload, dict):
+            return
+
+        if not isinstance(response_payload, dict):
+            return
+
+        if request_payload.get("method") != "tools/list":
+            return
+
+        request_id = request_payload.get("id")
+        response_id = response_payload.get("id")
+
+        if request_id is None or request_id != response_id:
+            return
+
+        result = response_payload.get("result")
+
+        if not isinstance(result, dict):
+            return
+
+        tools = result.get("tools")
+
+        if not isinstance(tools, list):
+            return
+
+        session_id = request.headers.get("mcp-session-id")
+
+        for tool in tools:
+            if not isinstance(tool, dict):
+                continue
+
+            message = {
+                "server_id": self.config.upstream_url,
+                "tool": tool,
+            }
+
+            context = InspectionContext(
+                direction="outbound",
+                protocol="mcp",
+                session_id=session_id,
+                request_id=str(request_id),
+            )
+
+            await self.auditor.log_traffic(
+                context=context,
+                message=message,
+                metadata={
+                    "http_method": request.method,
+                    "mcp_method": "tools/list",
+                    "tool_name": tool.get("name"),
+                },
+            )
+
+            reports = await self.inspection_engine.inspect(
+                message=message,
+                context=context,
+            )
+
+            for report in reports:
+                if not report.success:
+                    logger.error(
+                        "Inspection module '%s' failed: %s",
+                        report.module_id,
+                        report.error,
+                    )
+                    continue
+
+                for finding in report.findings:
+                    await self.auditor.log_alert(
+                        context=context,
+                        module_id=report.module_id,
+                        finding=finding,
+                    )
+
     async def _forward_request(self, request: Request):
         upstream_url = self.config.upstream_url
 
